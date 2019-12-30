@@ -1,0 +1,13 @@
+name = "AlphaStable"
+uuid = "f20549b4-2d50-407f-863c-cdd202ba59a3"
+authors = ["Fredrik Bagge Carlson"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
