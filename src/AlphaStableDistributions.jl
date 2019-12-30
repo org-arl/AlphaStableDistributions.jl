@@ -5,7 +5,7 @@ using StatsBase, Distributions, StaticArrays
 using MAT, SpecialFunctions, ToeplitzMatrices
 
 
-export AlphaStable, AlphaSubGaussian
+export AlphaStable, AlphaSubGaussian, fit
 
 Base.@kwdef struct AlphaStable{T} <: Distributions.ContinuousUnivariateDistribution
     α::T = 1.5
