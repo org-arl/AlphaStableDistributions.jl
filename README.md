@@ -1,6 +1,6 @@
 # AlphaStableDistributions
 
-[![Build Status](https://travis-ci.org/baggepinnen/AlphaStableDistributions.jl.svg?branch=master)](https://travis-ci.com/baggepinnen/AlphaStableDistributions.jl)
+[![Build Status](https://travis-ci.org/baggepinnen/AlphaStableDistributions.jl.svg?branch=master)](https://travis-ci.org/baggepinnen/AlphaStableDistributions.jl)
 [![Codecov](https://codecov.io/gh/baggepinnen/AlphaStableDistributions.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/baggepinnen/AlphaStableDistributions.jl)
 
 This library is a port of functionality from [arlpy](https://github.com/org-arl/arlpy/blob/master/arlpy/stable.py). The two distributions supported are
