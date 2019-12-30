@@ -30,4 +30,4 @@ julia> plot(x)
 ![window](asg.svg)
 
 ### Credits
-Julia code by @ymtoo and @baggepinnen, original implementation by @mchitre and others.
+Julia code by [@ymtoo](https://github.com/ymtoo) and [@baggepinnen](https://github.com/baggepinnen), original implementation by [@mchitre](https://github.com/mchitre) and others.
