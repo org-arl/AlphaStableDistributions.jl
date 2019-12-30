@@ -10,7 +10,7 @@ d2 = fit(AlphaStable, s)
 @test d1.α ≈ d2.α rtol=0.1
 @test d1.β ≈ d2.β rtol=0.1
 @test d1.scale ≈ d2.scale rtol=0.1
-@test d1.location ≈ d2.location atol=0.01
+@test d1.location ≈ d2.location atol=0.03
 
 
 x = rand(AlphaSubGaussian(n=96000))
