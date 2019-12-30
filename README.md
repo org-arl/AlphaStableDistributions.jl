@@ -3,7 +3,9 @@
 [![Build Status](https://travis-ci.org/baggepinnen/AlphaStableDistributions.jl.svg?branch=master)](https://travis-ci.com/baggepinnen/AlphaStableDistributions.jl)
 [![Codecov](https://codecov.io/gh/baggepinnen/AlphaStableDistributions.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/baggepinnen/AlphaStableDistributions.jl)
 
-This library is a port of functionality from [arlpy](https://github.com/org-arl/arlpy/blob/master/arlpy/stable.py).
+This library is a port of functionality from [arlpy](https://github.com/org-arl/arlpy/blob/master/arlpy/stable.py). The two distributions supported are
+- [alpha-stable distribution](https://en.wikipedia.org/wiki/Stable_distribution) (`rand` and `fit`)
+- [alpha sub-Gaussian distribution with memory](https://arl.nus.edu.sg/twiki6/pub/ARL/BibEntries/SigProc2016RandomVariate.pdf) (`rand`)
 
 ## Installation
 ```julia
