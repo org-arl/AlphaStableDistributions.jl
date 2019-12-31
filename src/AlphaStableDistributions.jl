@@ -227,13 +227,13 @@ function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian, x::AbstractArray)
     S = S/sqrt(sum(abs2,S))
     xtmp = ((sigrootx1*sqrt(A*T))*S)'
     if n<=m
-        x = xtmp[1:n]
+        copyto!(x, @view(xtmp[1:n]))
     else
-        x = zeros(n)
+        # x = zeros(n)
         x[onetom] = xtmp
         vstud = α+m
         norms = pdf(TDist(vstud), 0.0)
-        for i = m+1:n
+        @inbounds for i = m+1:n
             x1 = SVector{m,Float64}(view(x,i-m:i-1))
             mode = modefactor*x1
             norm1 = subgausscondprobtabulate(α, x1, mode, invRx1, invR, vjoint, nmin, nmax, step, rind, kappa, k1, k2, kmarg)
@@ -252,5 +252,8 @@ function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian, x::AbstractArray)
     end
     x
 end
+
+
+Base.rand(rng::AbstractRNG, d::AlphaSubGaussian) = rand!(rng, d, zeros(d.n))
 
 end # module
