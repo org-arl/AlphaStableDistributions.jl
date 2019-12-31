@@ -140,7 +140,7 @@ The maximum acceptable size of `R` is `10x10`
 Base.@kwdef struct AlphaSubGaussian{T,M<:AbstractMatrix} <: Distributions.ContinuousUnivariateDistribution
     α::T = 1.50
     R::M = SMatrix{5,5}(collect(SymmetricToeplitz([1.0000, 0.5804, 0.2140, 0.1444, -0.0135])))
-    n::Int = 10000
+    n::Int
 end
 
 """
