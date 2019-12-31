@@ -121,21 +121,35 @@ function Base.rand(rng::AbstractRNG, d::AlphaStable)
     bϕ = π/2 + β*ϕ
     x = 2/π * (bϕ*tan(ϕ) - β*log(π/2*w*cosϕ/bϕ))
     α == 1 || (x += β * tan(π*α/2))
-    
+
     return loc + scale*x
 end
 
 
 """
-...
+
+Generate alpha-sub-Gaussian (aSG) random numbers.
+
+The implementation is based on https://github.com/ahmd-mahm/alpha-SGNm/blob/master/asgn.m
+
+Reference:
+A. Mahmood and M. Chitre, "Generating random variates for stable sub-Gaussian processes
+with memory", Signal Processing, Volume 131, Pages 271-279, 2017.
+(https://doi.org/10.1016/j.sigpro.2016.08.016.)
+
+
 # Arguments
-- `alpha`: characteristic exponent associated with the aSGN(m) process. This is
+- `α`: characteristic exponent associated with the aSGN(m) process. This is
 a scalar input and should lie within `collect(1.1:0.01:1.98)`.
 - `R`: covariance matrix of any adjacent `m+1` samples in an aSGN(m) process.
 The dimension of `R` is equal to `m+1`. It should be a symmetric toeplitz matrix.
 The maximum acceptable size of `R` is `10x10`
 - `n`: number of samples required
-...
+
+# Examples
+```jldoctest
+julia> x = rand(AlphaSubGaussian(n=1000))
+```
 """
 Base.@kwdef struct AlphaSubGaussian{T,M<:AbstractMatrix} <: Distributions.ContinuousUnivariateDistribution
     α::T = 1.50
@@ -184,23 +198,10 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
     (1/sqrt(kappa))*kmarg*vjointR/vjointR1
 end
 
-"""
-Generate alpha-sub-Gaussian (aSG) random numbers.
 
-The implementation is based on https://github.com/ahmd-mahm/alpha-SGNm/blob/master/asgn.m
-
-Reference:
-A. Mahmood and M. Chitre, "Generating random variates for stable sub-Gaussian processes
-with memory", Signal Processing, Volume 131, Pages 271-279, 2017.
-(https://doi.org/10.1016/j.sigpro.2016.08.016.)
-
-# Examples
-```jldoctest
-julia> x = rand(AlphaSubGaussian(n=1000))
-```
-"""
-function Base.rand(rng::AbstractRNG, d::AlphaSubGaussian)
+function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian, x::AbstractArray)
     α=d.α; R=d.R; n=d.n
+    length(x) >= n || throw(ArgumentError("length of x must be at least n"))
     α ∈ 1.10:0.01:1.98 || throw(DomainError(α, "α must lie within `1.10:0.01:1.98`"))
     m = size(R, 1)-1
     funk1 = x -> (2^α)*sin(π*α/2)*gamma((α+2)/2)*gamma((α+x)/2)/(gamma(x/2)*π*α/2)
