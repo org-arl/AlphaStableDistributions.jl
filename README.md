@@ -1,7 +1,7 @@
 # AlphaStableDistributions
 
-[![Build Status](https://travis-ci.org/baggepinnen/AlphaStableDistributions.jl.svg?branch=master)](https://travis-ci.org/baggepinnen/AlphaStableDistributions.jl)
-[![Codecov](https://codecov.io/gh/baggepinnen/AlphaStableDistributions.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/baggepinnen/AlphaStableDistributions.jl)
+[![Build Status](https://travis-ci.org/org-arl/AlphaStableDistributions.jl.svg?branch=master)](https://travis-ci.org/org-arl/AlphaStableDistributions.jl)
+[![Codecov](https://codecov.io/gh/org-arl/AlphaStableDistributions.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/org-arl/AlphaStableDistributions.jl)
 
 This library is a port of functionality from [arlpy](https://github.com/org-arl/arlpy/blob/master/arlpy/stable.py). The two distributions supported are
 - [alpha-stable distribution](https://en.wikipedia.org/wiki/Stable_distribution) (`rand` and `fit`)
@@ -9,7 +9,7 @@ This library is a port of functionality from [arlpy](https://github.com/org-arl/
 
 ## Installation
 ```julia
-using Pkg; pkg"add https://github.com/baggepinnen/AlphaStableDistributions.jl"
+using Pkg; pkg"add https://github.com/org-arl/AlphaStableDistributions.jl"
 ```
 
 ## Usage
