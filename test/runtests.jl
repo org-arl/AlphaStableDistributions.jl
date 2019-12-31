@@ -1,5 +1,5 @@
 using AlphaStableDistributions
-using Test
+using Test, Random
 
 @testset "AlphaStableDistributions.jl" begin
 
