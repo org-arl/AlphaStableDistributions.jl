@@ -4,7 +4,8 @@ using Test
 @testset "AlphaStableDistributions.jl" begin
 
 d1 = AlphaStable()
-s = [rand(d1) for _ in 1:100000]
+s = rand(d1, 100000)
+
 d2 = fit(AlphaStable, s)
 
 @test d1.α ≈ d2.α rtol=0.1
@@ -13,8 +14,17 @@ d2 = fit(AlphaStable, s)
 @test d1.location ≈ d2.location atol=0.03
 
 
-x = rand(AlphaSubGaussian(n=96000))
+d = AlphaSubGaussian(n=96000)
+x = rand(d)
+x2 = copy(x)
+rand!(d, x2)
+@test x != x2
 
+d3 = fit(AlphaStable, x)
+@test d3.α ≈ 1.5 rtol=0.2
+@test d3.β == 0
+@test d3.scale ≈ 1 rtol=0.2
+@test d3.location ≈ 0 atol=0.03
 
 end
 # 362.499 ms (4620903 allocations: 227.64 MiB)

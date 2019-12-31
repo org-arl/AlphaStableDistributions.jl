@@ -19,7 +19,7 @@ julia> using AlphaStableDistributions
 julia> d1 = AlphaStable()
 AlphaStable{Float64}(α=1.5, β=0.0, scale=1.0, location=0.0)
 
-julia> s = [rand(d1) for _ in 1:100000];
+julia> s = rand(d1, 100000);
 
 julia> d2 = fit(AlphaStable, s)
 
