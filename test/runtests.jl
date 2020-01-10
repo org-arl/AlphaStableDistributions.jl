@@ -12,8 +12,13 @@ d2 = fit(AlphaStable, s)
 @test d1.scale ≈ d2.scale rtol=0.1
 @test d1.location ≈ d2.location atol=0.01
 
+d1 = AlphaSubGaussian(n=96000)
+m = size(d1.R, 1)-1
+x = rand(d1)
+d2 = fit(AlphaSubGaussian, x, m, p=1.0)
 
-x = rand(AlphaSubGaussian(n=96000))
+@test d1.α ≈ d2.α rtol=0.1
+@test d1.R ≈ d2.R rtol=0.1
 
 
 end
