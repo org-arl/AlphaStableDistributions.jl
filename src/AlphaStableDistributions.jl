@@ -185,15 +185,15 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
     if r<nmin
         grad = (vjoint[m+1, 1]-k2[2])/nmin
         cons = k2[2]
-        vjointR = grad*r1+cons
+        vjointR = grad*r+cons
     elseif r>nmax
-        vjointR = α*k1[2]*(r^(-α-m))
+        vjointR = α*k1[2]*(r^(-α-m-1))
     else
         ti = (log10(r)-log10(nmin))/step+1
         tempind = (floor(Int, ti), ceil(Int, ti))
         grad = (vjoint[m+1, tempind[1]]-vjoint[m+1, tempind[2]])/(rind[tempind[1]]-rind[tempind[2]])
         cons = vjoint[m+1, tempind[1]]-grad*rind[tempind[1]]
-        vjointR = grad*r1+cons
+        vjointR = grad*r+cons
     end
     (1/sqrt(kappa))*kmarg*vjointR/vjointR1
 end
