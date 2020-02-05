@@ -280,7 +280,7 @@ function Distributions.fit(d::Type{<:AlphaSubGaussian}, x::AbstractVector{T}, m:
     for i in 1:m
         tempxlen = xlen-mod(xlen, i)
         xtemp = reshape(x[1:end-mod(xlen, i)], i, tempxlen÷i)
-        if mod(tempxlen/i, 2) != 0
+        if mod(tempxlen÷i, 2) != 0
             xtemp = xtemp[:, 1:end-1]
             tempxlen = size(xtemp, 1)*size(xtemp, 2)
         end
