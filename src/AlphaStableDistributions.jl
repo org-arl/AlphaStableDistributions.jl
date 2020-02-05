@@ -7,7 +7,7 @@ using MAT, SpecialFunctions, ToeplitzMatrices
 
 export AlphaStable, AlphaSubGaussian, fit
 
-Base.@kwdef struct AlphaStable{T} <: Distributions.Distribution{Distributions.Univariate,Distributions.Continuous}
+Base.@kwdef struct AlphaStable{T} <: Distributions.ContinuousUnivariateDistribution
     α::T = 1.5
     β::T = 0.0
     scale::T = 1.0
