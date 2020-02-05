@@ -167,7 +167,7 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
     r1 = sqrt(x1'*invRx1*x1)
     x = SVector{length(x1)+1, Float64}(x1..., x2_ind)
     r = sqrt(x'*invR*x)
-    
+
     if r1<nmin
         grad = (vjoint[m, 1]-k2[1])/nmin
         cons = k2[1]
@@ -181,7 +181,7 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
         cons = vjoint[m, tempind[1]]-grad*rind[tempind[1]]
         vjointR1 = grad*r1+cons
     end
-    
+
     if r<nmin
         grad = (vjoint[m+1, 1]-k2[2])/nmin
         cons = k2[2]
@@ -255,5 +255,42 @@ end
 
 
 Base.rand(rng::AbstractRNG, d::AlphaSubGaussian) = rand!(rng, d, zeros(d.n))
+
+"""
+    fit(d::Type{<:AlphaSubGaussian}, x, m; p=1.0)
+
+Fit an aSGN(m) model to data via the covariation method.
+
+The covariation method requires an additional parameter `p`. Ideally, 1 < p < α. In most practical impulsive scenarios p=1.0 is sufficient.
+`m` is the number of lags in the covariance matrix.
+
+The implementation is based on https://github.com/ahmd-mahm/alpha-SGNm/blob/master/param_est/asgnfit.m
+
+Reference:
+A. Mahmood and M. Chitre, "Generating random variates for stable sub-Gaussian processes
+with memory", Signal Processing, Volume 131, Pages 271-279, 2017.
+(https://doi.org/10.1016/j.sigpro.2016.08.016.)
+"""
+function Distributions.fit(d::Type{<:AlphaSubGaussian}, x::AbstractVector{T}, m::Integer; p=one(T)) where T
+    d1   = fit(AlphaStable, x)
+    α    = d1.α; scale=d1.scale
+    cov  = zeros(T, m+1, m+1)
+    xlen = length(x)
+    c    = ((sum(abs.(x).^p)/xlen)^(1/p))/scale
+    for i in 1:m
+        tempxlen = xlen-mod(xlen, i)
+        xtemp = reshape(x[1:end-mod(xlen, i)], i, tempxlen÷i)
+        if mod(tempxlen/i, 2) != 0
+            xtemp = xtemp[:, 1:end-1]
+            tempxlen = size(xtemp, 1)*size(xtemp, 2)
+        end
+        xtemp = reshape(xtemp', 2, tempxlen÷2)
+        r = (2/(c^p))*(scale^(2-p))*(xtemp[1, :]'*((sign.(xtemp[2, :]).*(abs.(xtemp[2, :]).^(p-1)))))/(tempxlen/2)
+        cov[diagind(cov, i)] .+= r
+    end
+    cov = (cov+cov')+2*(scale^2)*I(m+1)
+    cov ./= 2*scale^2
+    AlphaSubGaussian(α=α, R=cov, n=length(x))
+end
 
 end # module
