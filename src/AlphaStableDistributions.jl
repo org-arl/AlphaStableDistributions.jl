@@ -7,7 +7,7 @@ using MAT, SpecialFunctions, ToeplitzMatrices
 
 export AlphaStable, AlphaSubGaussian, fit
 
-Base.@kwdef struct AlphaStable{T} <: Distributions.ContinuousUnivariateDistribution
+Base.@kwdef struct AlphaStable{T} <: Distributions.Distribution{Distributions.Univariate,Distributions.Continuous}
     α::T = 1.5
     β::T = 0.0
     scale::T = 1.0
@@ -121,7 +121,7 @@ function Base.rand(rng::AbstractRNG, d::AlphaStable)
     bϕ = π/2 + β*ϕ
     x = 2/π * (bϕ*tan(ϕ) - β*log(π/2*w*cosϕ/bϕ))
     α == 1 || (x += β * tan(π*α/2))
-    
+
     return loc + scale*x
 end
 
@@ -153,7 +153,7 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
     r1 = sqrt(x1'*invRx1*x1)
     x = SVector{length(x1)+1, Float64}(x1..., x2_ind)
     r = sqrt(x'*invR*x)
-    
+
     if r1<nmin
         grad = (vjoint[m, 1]-k2[1])/nmin
         cons = k2[1]
@@ -167,7 +167,7 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
         cons = vjoint[m, tempind[1]]-grad*rind[tempind[1]]
         vjointR1 = grad*r1+cons
     end
-    
+
     if r<nmin
         grad = (vjoint[m+1, 1]-k2[2])/nmin
         cons = k2[2]
