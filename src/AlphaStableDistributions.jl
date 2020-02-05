@@ -76,10 +76,10 @@ function Distributions.fit(d::Type{<:AlphaStable}, x)
     else
         α = 0.
         j = findfirst(>=(an), _ena) # _np.where(an <= _ena[:,0])[0]
-        if j !== nothing
-            t = (an-_ena[j,1])/(_ena[j+1]-_ena[j])
-            α = (21-j-t)/10
-        end
+        (j === nothing || j == length(_ena)) && (j = length(_ena)-1)
+        t = (an-_ena[j])/(_ena[j+1]-_ena[j])
+        α = (21-j-t)/10
+
     end
     if α < 0.5
         α = 0.5

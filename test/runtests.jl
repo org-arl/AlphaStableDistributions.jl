@@ -3,35 +3,39 @@ using Test, Random
 
 @testset "AlphaStableDistributions.jl" begin
 
-d1 = AlphaStable()
-s = rand(d1, 100000)
+    for α in 0.5:0.1:2
+        d1 = AlphaStable(α=α)
+        s = rand(d1, 100000)
 
-d2 = fit(AlphaStable, s)
+        d2 = fit(AlphaStable, s)
 
-@test d1.α ≈ d2.α rtol=0.1
-@test d1.β ≈ d2.β rtol=0.1
-@test d1.scale ≈ d2.scale rtol=0.1
-@test d1.location ≈ d2.location atol=0.03
+        @test d1.α ≈ d2.α rtol=0.1
+        @test d1.β ≈ d2.β rtol=0.1
+        @test d1.scale ≈ d2.scale rtol=0.1
+        @test d1.location ≈ d2.location atol=0.03
+    end
 
+    for α in 1.1:0.1:1.9
 
-d = AlphaSubGaussian(n=96000)
-x = rand(d)
-x2 = copy(x)
-rand!(d, x2)
-@test x != x2
+        d = AlphaSubGaussian(n=96000, α=α)
+        x = rand(d)
+        x2 = copy(x)
+        rand!(d, x2)
+        @test x != x2
 
-d3 = fit(AlphaStable, x)
-@test d3.α ≈ 1.5 rtol=0.2
-@test d3.β == 0
-@test d3.scale ≈ 1 rtol=0.2
-@test d3.location ≈ 0 atol=0.03
+        d3 = fit(AlphaStable, x)
+        @test d3.α ≈ α rtol=0.2
+        @test d3.β == 0
+        @test d3.scale ≈ 1 rtol=0.2
+        @test d3.location ≈ 0 atol=0.03
+    end
 
-d4 = AlphaSubGaussian(n=96000)
-m = size(d4.R, 1)-1
-x = rand(d4)
-d5 = fit(AlphaSubGaussian, x, m, p=1.0)
-@test d4.α ≈ d5.α rtol=0.1
-@test d4.R ≈ d5.R rtol=0.1
+    d4 = AlphaSubGaussian(n=96000)
+    m = size(d4.R, 1)-1
+    x = rand(d4)
+    d5 = fit(AlphaSubGaussian, x, m, p=1.0)
+    @test d4.α ≈ d5.α rtol=0.1
+    @test d4.R ≈ d5.R rtol=0.1
 
 end
 # 362.499 ms (4620903 allocations: 227.64 MiB)
