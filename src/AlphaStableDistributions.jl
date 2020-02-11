@@ -9,9 +9,9 @@ export AlphaStable, AlphaSubGaussian, fit
 
 Base.@kwdef struct AlphaStable{T} <: Distributions.ContinuousUnivariateDistribution
     α::T = 1.5
-    β::T = 0.0
-    scale::T = 1.0
-    location::T = 0.0
+    β::T = zero(α)
+    scale::T = one(α)
+    location::T = zero(α)
 end
 
 
@@ -84,7 +84,7 @@ function Distributions.fit(d::Type{<:AlphaStable}, x)
     if α < 0.5
         α = 0.5
     end
-    return AlphaStable(α=α, scale=c, location=δ)
+    return AlphaStable(α=α, β=zero(α), scale=c, location=oftype(α, δ))
 end
 
 """
@@ -167,7 +167,7 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
     r1 = sqrt(x1'*invRx1*x1)
     x = SVector{length(x1)+1, Float64}(x1..., x2_ind)
     r = sqrt(x'*invR*x)
-    
+
     if r1<nmin
         grad = (vjoint[m, 1]-k2[1])/nmin
         cons = k2[1]
@@ -181,7 +181,7 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
         cons = vjoint[m, tempind[1]]-grad*rind[tempind[1]]
         vjointR1 = grad*r1+cons
     end
-    
+
     if r<nmin
         grad = (vjoint[m+1, 1]-k2[2])/nmin
         cons = k2[2]
