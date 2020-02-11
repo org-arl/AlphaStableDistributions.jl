@@ -16,7 +16,7 @@ ToeplitzMatrices = "c751599d-da0a-543b-9d20-d0a503d91d24"
 
 [compat]
 Distributions = "0.21, 0.22"
-MAT = "0.7"
+MAT = "0.6, 0.7"
 SpecialFunctions = "0.8, 0.9, 0.10"
 StaticArrays = "0.12"
 StatsBase = "0.32"
