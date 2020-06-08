@@ -67,8 +67,9 @@ c is computed based on Fama & Roll (1971) fractile.
 δ is the 50% trimmed mean of the sample.
 """
 function Distributions.fit(d::Type{<:AlphaStable}, x)
-    δ = mean(StatsBase.trim(x,prop=0.25))
-    p = quantile.(Ref(sort(x)), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
+    sx = sort(x)
+    δ = mean(@view(sx[end÷4:(3*end)÷4]))
+    p = quantile.(Ref(sx), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
     c = (p[4]-p[3])/1.654
     an = (p[6]-p[1])/(p[5]-p[2])
     if an < 2.4388
