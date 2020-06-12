@@ -86,3 +86,9 @@ end
 # using Cthulhu
 # d = AlphaSubGaussian(n=96)
 # @descend_code_warntype rand(Random.GLOBAL_RNG, d)
+# 
+# using AlphaStableDistributions
+# d1 = AlphaStable(α=1.5)
+# s = rand(d1, 100000)
+# using ThreadsX
+# @btime fit($AlphaStable, $s, $ThreadsX.MergeSort)

@@ -54,10 +54,11 @@ const _ena = [
 ]
 
 """
+    fit(d::Type{<:AlphaStable}, x; alg=QuickSort)
+
 Fit a symmetric α stable distribution to data.
 
-:param x: data
-:returns: (α, c, δ)
+returns `AlphaStable`
 
 α, c and δ are the characteristic exponent, scale parameter
 (dispersion^1/α) and location parameter respectively.
@@ -66,11 +67,11 @@ Fit a symmetric α stable distribution to data.
 c is computed based on Fama & Roll (1971) fractile.
 δ is the 50% trimmed mean of the sample.
 """
-function Distributions.fit(d::Type{<:AlphaStable}, x, alg=QuickSort)
+function Distributions.fit(d::Type{<:AlphaStable}, x; alg=QuickSort)
     sx = sort(x, alg=alg)
-    δ = mean(@view(sx[end÷4:(3*end)÷4]))
-    p = quantile.(Ref(sx), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
-    c = (p[4]-p[3])/1.654
+    δ  = mean(@view(sx[end÷4:(3*end)÷4]))
+    p  = quantile.(Ref(sx), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
+    c  = (p[4]-p[3])/1.654
     an = (p[6]-p[1])/(p[5]-p[2])
     if an < 2.4388
         α = 2.

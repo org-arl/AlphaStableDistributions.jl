@@ -21,7 +21,7 @@ AlphaStable{Float64}(α=1.5, β=0.0, scale=1.0, location=0.0)
 
 julia> s = rand(d1, 100000);
 
-julia> d2 = fit(AlphaStable, s)
+julia> d2 = fit(AlphaStable, s, alg=QuickSort) # See ThreadsX.QuickSort for a threaded algorithm
 
 AlphaStable{Float64}(α=1.4748701622930906, β=0.0, scale=1.006340087707924, location=-0.0036724481641865715)
 
