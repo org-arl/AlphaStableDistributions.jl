@@ -3,7 +3,7 @@ module AlphaStableDistributions
 using LinearAlgebra, Statistics, Random
 using StatsBase, Distributions, StaticArrays
 using MAT, SpecialFunctions, ToeplitzMatrices
-
+using Interpolations
 
 export AlphaStable, AlphaSubGaussian, fit
 
@@ -33,61 +33,219 @@ Statistics.var(d::AlphaStable) = d.α == 2 ? 2d.scale^2 : Inf
 # mgf(d::AlphaStable, ::Any) = error("Not implemented")
 # cf(d::AlphaStable, ::Any) = error("Not implemented")
 
-# lookup table from McCulloch (1986)
-const _ena = [
-2.4388
-2.5120
-2.6080
-2.7369
-2.9115
-3.1480
-3.4635
-3.8824
-4.4468
-5.2172
-6.3140
-7.9098
-10.4480
-14.8378
-23.4831
-44.2813
+# # lookup table from McCulloch (1986)
+# const _ena = [
+# 2.4388
+# 2.5120
+# 2.6080
+# 2.7369
+# 2.9115
+# 3.1480
+# 3.4635
+# 3.8824
+# 4.4468
+# 5.2172
+# 6.3140
+# 7.9098
+# 10.4480
+# 14.8378
+# 23.4831
+# 44.2813
+# ]
+
+# lookup tables from McCulloch (1986)
+const _να = [
+    2.439
+    2.500
+    2.600
+    2.700
+    2.800
+    3.000
+    3.200
+    3.500
+    4.000
+    5.000
+    6.000
+    8.000
+    10.000
+    15.000
+    25.000
+]  
+const _νβ = [
+    0.0 
+    0.1 
+    0.2
+    0.3
+    0.5
+    0.7
+    1.0
+]      
+const ψ₁ = [
+    2.000 2.000 2.000 2.000 2.000 2.000 2.000
+    1.916 1.924 1.924 1.924 1.924 1.924 1.924
+    1.808 1.813 1.829 1.829 1.829 1.829 1.829
+    1.729 1.730 1.737 1.745 1.745 1.745 1.745
+    1.664 1.663 1.663 1.668 1.676 1.676 1.676
+    1.563 1.560 1.553 1.548 1.547 1.547 1.547
+    1.484 1.480 1.471 1.460 1.448 1.438 1.438
+    1.391 1.386 1.378 1.364 1.337 1.318 1.318
+    1.279 1.273 1.266 1.250 1.210 1.184 1.150
+    1.128 1.121 1.114 1.101 1.067 1.027 0.973
+    1.029 1.021 1.014 1.004 0.974 0.935 0.874
+    0.896 0.892 0.887 0.883 0.855 0.823 0.769
+    0.818 0.812 0.806 0.801 0.780 0.756 0.691
+    0.698 0.695 0.692 0.689 0.676 0.656 0.595
+    0.593 0.590 0.588 0.586 0.579 0.563 0.513
+]
+const ψ₂ = [
+    0.0 2.160 1.000 1.000 1.000 1.000 1.000
+    0.0 1.592 3.390 1.000 1.000 1.000 1.000
+    0.0 0.759 1.800 1.000 1.000 1.000 1.000
+    0.0 0.482 1.048 1.694 2.229 1.000 1.000
+    0.0 0.360 0.760 1.232 2.229 1.000 1.000
+    0.0 0.253 0.518 0.823 1.575 1.000 1.000
+    0.0 0.203 0.410 0.632 1.244 1.906 1.000
+    0.0 0.165 0.332 0.499 0.943 1.560 1.000
+    0.0 0.136 0.271 0.404 0.689 1.230 2.195
+    0.0 0.109 0.216 0.323 0.539 0.827 1.917
+    0.0 0.096 0.190 0.284 0.472 0.693 1.759
+    0.0 0.082 0.163 0.243 0.412 0.601 1.596
+    0.0 0.074 0.147 0.220 0.377 0.546 1.482
+    0.0 0.064 0.128 0.191 0.330 0.478 1.362
+    0.0 0.056 0.112 0.167 0.285 0.428 1.274
+]
+const _α =[
+    0.5
+    0.6
+    0.7
+    0.8
+    0.9
+    1.0
+    1.1
+    1.2
+    1.3
+    1.4
+    1.5
+    1.6
+    1.7
+    1.8
+    1.9
+    2.0
+]
+const _β = [
+    0.0
+    0.25
+    0.50
+    0.75
+    1.00
+]
+const ϕ₃ = [
+    2.588  3.073  4.534  6.636  9.144
+    2.337  2.635  3.542  4.808  6.247
+    2.189  2.392  3.004  3.844  4.775
+    2.098  2.244  2.676  3.265  3.912
+    2.040  2.149  2.461  2.886  3.356
+    2.000  2.085  2.311  2.624  2.973
+    1.980  2.040  2.205  2.435  2.696
+    1.965  2.007  2.125  2.294  2.491
+    1.955  1.984  2.067  2.188  2.333
+    1.946  1.967  2.022  2.106  2.211
+    1.939  1.952  1.988  2.045  2.116
+    1.933  1.940  1.962  1.997  2.043
+    1.927  1.930  1.943  1.961  1.987
+    1.921  1.922  1.927  1.936  1.947
+    1.914  1.915  1.916  1.918  1.921
+    1.908  1.908  1.908  1.908  1.908
+]
+const ϕ₅ = [
+    0.0 0.0    0.0    0.0    0.0
+    0.0 -0.017 -0.032 -0.049 -0.064
+    0.0 -0.030 -0.061 -0.092 -0.123
+    0.0 -0.043 -0.088 -0.132 -0.179
+    0.0 -0.056 -0.111 -0.170 -0.232
+    0.0 -0.066 -0.134 -0.206 -0.283
+    0.0 -0.075 -0.154 -0.241 -0.335
+    0.0 -0.084 -0.173 -0.276 -0.390
+    0.0 -0.090 -0.192 -0.310 -0.447
+    0.0 -0.095 -0.208 -0.346 -0.508
+    0.0 -0.098 -0.223 -0.383 -0.576
+    0.0 -0.099 -0.237 -0.424 -0.652
+    0.0 -0.096 -0.250 -0.469 -0.742
+    0.0 -0.089 -0.262 -0.520 -0.853
+    0.0 -0.078 -0.272 -0.581 -0.997
+    0.0 -0.061 -0.279 -0.659 -1.198
 ]
 
 """
-    fit(d::Type{<:AlphaStable}, x; alg=QuickSort)
+Fit an α stable distribution to data.
 
-Fit a symmetric α stable distribution to data.
+:param x: data
+:returns: (α, β, c, δ)
 
-returns `AlphaStable`
-
-α, c and δ are the characteristic exponent, scale parameter
+α, β, c and δ are the characteristic exponent, skewness parameter, scale parameter
 (dispersion^1/α) and location parameter respectively.
 
-α is computed based on McCulloch (1986) fractile.
-c is computed based on Fama & Roll (1971) fractile.
-δ is the 50% trimmed mean of the sample.
+α, β, c and δ are computed based on McCulloch (1986) fractile.
 """
-function Distributions.fit(d::Type{<:AlphaStable}, x; alg=QuickSort)
-    sx = sort(x, alg=alg)
-    δ  = mean(@view(sx[end÷4:(3*end)÷4]))
-    p  = quantile.(Ref(sx), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
-    c  = (p[4]-p[3])/1.654
-    an = (p[6]-p[1])/(p[5]-p[2])
-    if an < 2.4388
-        α = 2.
-    else
-        α = 0.
-        j = findfirst(>=(an), _ena) # _np.where(an <= _ena[:,0])[0]
-        (j === nothing || j == length(_ena)) && (j = length(_ena))
-        t = (an-_ena[j-1])/(_ena[j]-_ena[j-1])
-        α = (22-j-t)/10
+function Distributions.fit(::Type{<:AlphaStable}, x)
+    p = quantile.(Ref(sort(x)), (0.05, 0.25, 0.28, 0.5, 0.72, 0.75, 0.95), sorted=true)
+    να = (p[7]-p[1]) / (p[6]-p[2])
+    νβ = (p[7]+p[1]-2p[4]) / (p[7]-p[1])
+    (να < _να[1]) && (να = _να[1])
+    (να > _να[end]) && (να = _να[end])
 
+    itp₁ = interpolate((_να, _νβ), ψ₁, Gridded(Linear()))
+    α = itp₁(να, abs(νβ))
+    itp₂ = interpolate((_να, _νβ), ψ₂, Gridded(Linear()))
+    β = sign(νβ) * itp₂(να, abs(νβ))
+
+    (β > 1.0) && (β = 1.0)
+    (β < -1.0) && (β = -1.0)
+    itp₃ = interpolate((_α, _β), ϕ₃, Gridded(Linear()))
+    c = (p[6]-p[2]) / itp₃(α, abs(β))
+    itp₄ = interpolate((_α, _β), ϕ₅, Gridded(Linear()))
+    ζ = p[4] + c * sign(β) * itp₄(α, abs(β))
+    if abs(α - 1.0) < 0.1
+        δ = ζ
+    else
+        δ = ζ - β * c * tan(π*α/2)
     end
-    if α < 0.5
-        α = 0.5
-    end
-    return AlphaStable(α=α, β=zero(α), scale=c, location=oftype(α, δ))
+    return AlphaStable(α=α, β=β, scale=c, location=oftype(α, δ))
 end
+
+# """
+# Fit a symmetric α stable distribution to data.
+
+# :param x: data
+# :returns: (α, c, δ)
+
+# α, c and δ are the characteristic exponent, scale parameter
+# (dispersion^1/α) and location parameter respectively.
+
+# α is computed based on McCulloch (1986) fractile.
+# c is computed based on Fama & Roll (1971) fractile.
+# δ is the 50% trimmed mean of the sample.
+# """
+# function Distributions.fit(d::Type{<:AlphaStable}, x)
+#     δ = mean(StatsBase.trim(x,prop=0.25))
+#     p = quantile.(Ref(sort(x)), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
+#     c = (p[4]-p[3])/1.654
+#     an = (p[6]-p[1])/(p[5]-p[2])
+#     if an < 2.4388
+#         α = 2.
+#     else
+#         α = 0.
+#         j = findfirst(>=(an), _ena) # _np.where(an <= _ena[:,0])[0]
+#         (j === nothing || j == length(_ena)) && (j = length(_ena))
+#         t = (an-_ena[j-1])/(_ena[j]-_ena[j-1])
+#         α = (22-j-t)/10
+
+#     end
+#     if α < 0.5
+#         α = 0.5
+#     end
+#     return AlphaStable(α=α, β=zero(α), scale=c, location=oftype(α, δ))
+# end
 
 """
 Generate independent stable random numbers.
@@ -278,7 +436,7 @@ function Distributions.fit(d::Type{<:AlphaSubGaussian}, x::AbstractVector{T}, m:
     α    = d1.α; scale=d1.scale
     cov  = zeros(T, m+1, m+1)
     xlen = length(x)
-    c    = ((sum(x->abs(x)^p, x)/xlen)^(1/p))/scale
+    c    = ((sum(abs.(x).^p)/xlen)^(1/p))/scale
     for i in 1:m
         tempxlen = xlen-mod(xlen, i)
         xtemp = reshape(x[1:end-mod(xlen, i)], i, tempxlen÷i)
@@ -287,7 +445,7 @@ function Distributions.fit(d::Type{<:AlphaSubGaussian}, x::AbstractVector{T}, m:
             tempxlen = size(xtemp, 1)*size(xtemp, 2)
         end
         xtemp = reshape(xtemp', 2, tempxlen÷2)
-        @views r = (2/(c^p))*(scale^(2-p))*(xtemp[1, :]'*((sign.(xtemp[2, :]).*(abs.(xtemp[2, :]).^(p-1)))))/(tempxlen/2)
+        r = (2/(c^p))*(scale^(2-p))*(xtemp[1, :]'*((sign.(xtemp[2, :]).*(abs.(xtemp[2, :]).^(p-1)))))/(tempxlen/2)
         cov[diagind(cov, i)] .+= r
     end
     cov = (cov+cov')+2*(scale^2)*I(m+1)
