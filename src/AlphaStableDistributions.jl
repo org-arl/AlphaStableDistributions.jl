@@ -177,10 +177,11 @@ const ϕ₅ = [
 ]
 
 """
+    fit(d::Type{<:AlphaStable}, x; alg=QuickSort)
+
 Fit an α stable distribution to data.
 
-:param x: data
-:returns: (α, β, c, δ)
+returns `AlphaStable`
 
 α, β, c and δ are the characteristic exponent, skewness parameter, scale parameter
 (dispersion^1/α) and location parameter respectively.
