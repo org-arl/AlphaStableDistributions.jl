@@ -12,7 +12,7 @@ using Test, Random, Distributions
         @test d1.α ≈ d2.α rtol=0.1
         @test d1.β ≈ d2.β atol=0.2
         @test d1.scale ≈ d2.scale rtol=0.1
-        @test d1.location ≈ d2.location atol=0.2
+        @test d1.location ≈ d2.location atol=0.1
     end
 
     xnormal = rand(Normal(3.0, 4.0), 96000)
