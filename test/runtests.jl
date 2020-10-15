@@ -1,22 +1,39 @@
 using AlphaStableDistributions
-using Test, Random
+using Test, Random, Distributions
 
 @testset "AlphaStableDistributions.jl" begin
 
-    for α in 0.5:0.1:2
-        d1 = AlphaStable(α=α)
-        s = rand(d1, 100000)
+    stabletypes = [AlphaStable,SymmetricAlphaStable]
+    αs = [0.6:0.1:2,1:0.1:2]
+    for (i, stabletype) in enumerate(stabletypes)
+        for α in αs[i]
+            d1 = AlphaStable(α=α)
+            s = rand(d1, 100000)
 
-        d2 = fit(AlphaStable, s)
+            d2 = fit(stabletype, s)
 
-        @test d1.α ≈ d2.α rtol=0.1
-        @test d1.β ≈ d2.β rtol=0.1
-        @test d1.scale ≈ d2.scale rtol=0.1
-        @test d1.location ≈ d2.location atol=0.03
+            @test d1.α ≈ d2.α rtol=0.1
+            stabletype != SymmetricAlphaStable && @test d1.β ≈ d2.β atol=0.2
+            @test d1.scale ≈ d2.scale rtol=0.1
+            @test d1.location ≈ d2.location atol=0.1
+        end
+
+        xnormal = rand(Normal(3.0, 4.0), 96000)
+        d = fit(stabletype, xnormal)
+        @test d.α ≈ 2 rtol=0.2
+        stabletype != SymmetricAlphaStable && @test d.β ≈ 0 atol=0.2
+        @test d.scale ≈ 4/√2 rtol=0.2
+        @test d.location ≈ 3 rtol=0.1
+
+        xcauchy = rand(Cauchy(3.0, 4.0), 96000)
+        d = fit(stabletype, xcauchy)
+        @test d.α ≈ 1 rtol=0.2
+        stabletype != SymmetricAlphaStable && @test d.β ≈ 0 atol=0.2
+        @test d.scale ≈ 4 rtol=0.2
+        @test d.location ≈ 3 rtol=0.1
     end
 
     for α in 1.1:0.1:1.9
-
         d = AlphaSubGaussian(n=96000, α=α)
         x = rand(d)
         x2 = copy(x)
@@ -25,9 +42,9 @@ using Test, Random
 
         d3 = fit(AlphaStable, x)
         @test d3.α ≈ α rtol=0.2
-        @test d3.β == 0
+        @test d3.β ≈ 0 atol=0.2
         @test d3.scale ≈ 1 rtol=0.2
-        @test d3.location ≈ 0 atol=0.03
+        @test d3.location ≈ 0 atol=0.1
     end
 
     d4 = AlphaSubGaussian(n=96000)
