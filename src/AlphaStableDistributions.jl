@@ -250,7 +250,7 @@ function Distributions.fit(::Type{<:SymmetricAlphaStable}, x)
     if α < 0.5
         α = 0.5
     end
-    return AlphaStable(α=α, β=zero(α), scale=c, location=oftype(α, δ))
+    return SymmetricAlphaStable(α=α, scale=c, location=oftype(α, δ))
 end
 
 """

@@ -28,7 +28,7 @@ using Test, Random, Distributions
         xcauchy = rand(Cauchy(3.0, 4.0), 96000)
         d = fit(stabletype, xcauchy)
         @test d.α ≈ 1 rtol=0.2
-        @test d.β ≈ 0 atol=0.2
+        stabletype != SymmetricAlphaStable && @test d.β ≈ 0 atol=0.2
         @test d.scale ≈ 4 rtol=0.2
         @test d.location ≈ 3 rtol=0.1
     end
