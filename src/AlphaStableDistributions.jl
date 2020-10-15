@@ -5,7 +5,7 @@ using StatsBase, Distributions, StaticArrays
 using MAT, SpecialFunctions, ToeplitzMatrices
 using Interpolations
 
-export AlphaStable, AlphaSubGaussian, fit
+export AlphaStable, SymmetricAlphaStable, AlphaSubGaussian, fit
 
 Base.@kwdef struct AlphaStable{T} <: Distributions.ContinuousUnivariateDistribution
     α::T = 1.5
@@ -33,27 +33,25 @@ Statistics.var(d::AlphaStable) = d.α == 2 ? 2d.scale^2 : Inf
 # mgf(d::AlphaStable, ::Any) = error("Not implemented")
 # cf(d::AlphaStable, ::Any) = error("Not implemented")
 
-# # lookup table from McCulloch (1986)
-# const _ena = [
-# 2.4388
-# 2.5120
-# 2.6080
-# 2.7369
-# 2.9115
-# 3.1480
-# 3.4635
-# 3.8824
-# 4.4468
-# 5.2172
-# 6.3140
-# 7.9098
-# 10.4480
-# 14.8378
-# 23.4831
-# 44.2813
-# ]
-
 # lookup tables from McCulloch (1986)
+const _ena = [
+    2.4388
+    2.5120
+    2.6080
+    2.7369
+    2.9115
+    3.1480
+    3.4635
+    3.8824
+    4.4468
+    5.2172
+    6.3140
+    7.9098
+    10.4480
+    14.8378
+    23.4831
+    44.2813
+]
 const _να = [
     2.439
     2.500
@@ -183,8 +181,8 @@ Fit an α stable distribution to data.
 
 returns `AlphaStable`
 
-α, β, c and δ are the characteristic exponent, skewness parameter, scale parameter
-(dispersion^1/α) and location parameter respectively.
+α∈[0.6,2.0], β∈[-1,1] , c∈[0,∞] and δ∈[-∞,∞] are the characteristic exponent, 
+skewness parameter, scale parameter (dispersion^1/α) and location parameter respectively.
 
 α, β, c and δ are computed based on McCulloch (1986) fractile.
 """
@@ -214,39 +212,46 @@ function Distributions.fit(::Type{<:AlphaStable}, x)
     return AlphaStable(α=α, β=β, scale=c, location=oftype(α, δ))
 end
 
-# """
-# Fit a symmetric α stable distribution to data.
+Base.@kwdef struct SymmetricAlphaStable{T} <: Distributions.ContinuousUnivariateDistribution
+    α::T = 1.5
+    scale::T = one(α)
+    location::T = zero(α)
+end
 
-# :param x: data
-# :returns: (α, c, δ)
+"""
+    fit(d::Type{<:SymmetricAlphaStable}, x; alg=QuickSort)
 
-# α, c and δ are the characteristic exponent, scale parameter
-# (dispersion^1/α) and location parameter respectively.
+Fit a symmetric α stable distribution to data.
 
-# α is computed based on McCulloch (1986) fractile.
-# c is computed based on Fama & Roll (1971) fractile.
-# δ is the 50% trimmed mean of the sample.
-# """
-# function Distributions.fit(d::Type{<:AlphaStable}, x)
-#     δ = mean(StatsBase.trim(x,prop=0.25))
-#     p = quantile.(Ref(sort(x)), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
-#     c = (p[4]-p[3])/1.654
-#     an = (p[6]-p[1])/(p[5]-p[2])
-#     if an < 2.4388
-#         α = 2.
-#     else
-#         α = 0.
-#         j = findfirst(>=(an), _ena) # _np.where(an <= _ena[:,0])[0]
-#         (j === nothing || j == length(_ena)) && (j = length(_ena))
-#         t = (an-_ena[j-1])/(_ena[j]-_ena[j-1])
-#         α = (22-j-t)/10
+returns `SymmetricAlphaStable`
 
-#     end
-#     if α < 0.5
-#         α = 0.5
-#     end
-#     return AlphaStable(α=α, β=zero(α), scale=c, location=oftype(α, δ))
-# end
+α∈[1,2], c∈[0,∞] and δ∈[-∞,∞] are the characteristic exponent, scale parameter
+(dispersion^1/α) and location parameter respectively.
+
+α is computed based on McCulloch (1986) fractile.
+scale is computed based on Fama & Roll (1971) fractile.
+location is the 50% trimmed mean of the sample.
+"""
+function Distributions.fit(::Type{<:SymmetricAlphaStable}, x)
+    δ = mean(StatsBase.trim(x,prop=0.25))
+    p = quantile.(Ref(sort(x)), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
+    c = (p[4]-p[3])/1.654
+    an = (p[6]-p[1])/(p[5]-p[2])
+    if an < 2.4388
+        α = 2.
+    else
+        α = 0.
+        j = findfirst(>=(an), _ena) # _np.where(an <= _ena[:,0])[0]
+        (j === nothing || j == length(_ena)) && (j = length(_ena))
+        t = (an-_ena[j-1])/(_ena[j]-_ena[j-1])
+        α = (22-j-t)/10
+
+    end
+    if α < 0.5
+        α = 0.5
+    end
+    return AlphaStable(α=α, β=zero(α), scale=c, location=oftype(α, δ))
+end
 
 """
 Generate independent stable random numbers.
