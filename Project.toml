@@ -1,7 +1,7 @@
 name = "AlphaStableDistributions"
 uuid = "f20549b4-2d50-407f-863c-cdd202ba59a3"
 authors = ["Fredrik Bagge Carlson", "Too Yuen Min"]
-version = "1.1.1"
+version = "1.1.2"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
