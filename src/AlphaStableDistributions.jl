@@ -14,6 +14,8 @@ Base.@kwdef struct AlphaStable{T} <: Distributions.ContinuousUnivariateDistribut
     location::T = zero(α)
 end
 
+AlphaStable(α::Integer, β::Integer, scale::Integer, location::Integer) = AlphaStable(float(α), float(β), float(scale), float(location))
+
 
 # sampler(d::AlphaStable) = error("Not implemented")
 # pdf(d::AlphaStable, x::Real) = error("Not implemented")
@@ -267,30 +269,32 @@ This implementation is based on the method in J.M. Chambers, C.L. Mallows
 and B.W. Stuck, "A Method for Simulating Stable Random Variables," JASA 71 (1976): 340-4.
 McCulloch's MATLAB implementation (1996) served as a reference in developing this code.
 """
-function Base.rand(rng::AbstractRNG, d::AlphaStable)
+function Base.rand(rng::AbstractRNG, d::AlphaStable{T}) where {T<:Real}
     α=d.α; β=d.β; scale=d.scale; loc=d.location
     (α < 0.1 || α > 2) && throw(DomainError(α, "α must be in the range 0.1 to 2"))
     abs(β) > 1 && throw(DomainError(β, "β must be in the range -1 to 1"))
-    ϕ = (rand(rng) - 0.5) * π
-    if α == 1 && β == 0
-        return loc + scale*tan(ϕ)
+    ϕ = (rand(rng, T) - 0.5) * π
+    if α == one(T) && β == zero(T)
+        return loc + scale * tan(ϕ)
     end
-    w = -log(rand(rng))
+    w = -log(rand(rng, T))
     α == 2 && (return loc + 2*scale*sqrt(w)*sin(ϕ))
-    β == 0 && (return loc + scale * ((cos((1-α)*ϕ) / w)^(1.0/α - 1) * sin(α * ϕ) / cos(ϕ)^(1.0/α)))
+    β == zero(T) && (return loc + scale * ((cos((1-α)*ϕ) / w)^(one(T)/α - one(T)) * sin(α * ϕ) / cos(ϕ)^(one(T)/α)))
     cosϕ = cos(ϕ)
-    if abs(α-1) > 1e-8
-        ζ = β * tan(π*α/2)
+    if abs(α - one(T)) > 1e-8
+        ζ = β * tan(π * α / 2)
         aϕ = α * ϕ
-        a1ϕ = (1-α) * ϕ
-        return loc + scale * (( (sin(aϕ)+ζ*cos(aϕ))/cosϕ * ((cos(a1ϕ)+ζ*sin(a1ϕ))) / ((w*cosϕ)^((1-α)/α)) ))
+        a1ϕ = (one(T) - α) * ϕ
+        return loc + scale * (( (sin(aϕ) + ζ * cos(aϕ))/cosϕ * ((cos(a1ϕ) + ζ*sin(a1ϕ))) / ((w*cosϕ)^((1-α)/α)) ))
     end
     bϕ = π/2 + β*ϕ
-    x = 2/π * (bϕ*tan(ϕ) - β*log(π/2*w*cosϕ/bϕ))
-    α == 1 || (x += β * tan(π*α/2))
+    x = 2/π * (bϕ * tan(ϕ) - β * log(π/2*w*cosϕ/bϕ))
+    α == one(T) || (x += β * tan(π*α/2))
 
-    return loc + scale*x
+    return loc + scale * x
 end
+
+Base.eltype(::Type{<:AlphaStable{T}}) where {T<:AbstractFloat} = T
 
 
 """
@@ -318,11 +322,15 @@ The maximum acceptable size of `R` is `10x10`
 julia> x = rand(AlphaSubGaussian(n=1000))
 ```
 """
-Base.@kwdef struct AlphaSubGaussian{T,M<:AbstractMatrix} <: Distributions.ContinuousUnivariateDistribution
+Base.@kwdef struct AlphaSubGaussian{T<:AbstractFloat} <: Distributions.ContinuousUnivariateDistribution
     α::T = 1.50
-    R::M = SMatrix{5,5}(collect(SymmetricToeplitz([1.0000, 0.5804, 0.2140, 0.1444, -0.0135])))
+    R::AbstractMatrix{T} = SMatrix{5,5}(collect(SymmetricToeplitz([1.0000, 0.5804, 0.2140, 0.1444, -0.0135])))
     n::Int
 end
+
+AlphaSubGaussian(α::T, n::Int) where {T<:AbstractFloat} = AlphaSubGaussian(α=α, 
+                                                                           R=SMatrix{5,5}(T.(collect(SymmetricToeplitz([1.0000, 0.5804, 0.2140, 0.1444, -0.0135])))),
+                                                                           n=n)
 
 """
 Generates the conditional probability f(X2|X1) if [X1, X2] is a sub-Gaussian
@@ -366,10 +374,10 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
 end
 
 
-function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian, x::AbstractArray)
+function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian{T}, x::AbstractArray{T}) where {T<:Real}
     α=d.α; R=d.R; n=d.n
     length(x) >= n || throw(ArgumentError("length of x must be at least n"))
-    α ∈ 1.10:0.01:1.98 || throw(DomainError(α, "α must lie within `1.10:0.01:1.98`"))
+    α ∈ T.(1.10:0.01:1.98) || throw(DomainError(α, "α must lie within `1.10:0.01:1.98`"))
     m = size(R, 1)-1
     funk1 = x -> (2^α)*sin(π*α/2)*gamma((α+2)/2)*gamma((α+x)/2)/(gamma(x/2)*π*α/2)
     funk2 = x -> 4*gamma(x/α)/((α*2^2)*gamma(x/2)^2)
@@ -388,11 +396,11 @@ function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian, x::AbstractArray)
     nmax, nmin, res, rind, vjoint = matdict["Nmax"]::Float64, matdict["Nmin"]::Float64, matdict["res"]::Float64, vec(matdict["rind"])::Vector{Float64}, matdict["vJoint"]::Matrix{Float64}
     step = (log10(nmax)-log10(nmin))/res
     m>size(vjoint, 1)-1 && throw(DomainError(R, "The dimensions of `R` exceed the maximum possible 10x10"))
-    A = rand(AlphaStable(α/2, 1.0, 2*cos(π*α/4)^(2.0/α), 0.0))
-    T = rand(Chisq(m))
+    A = rand(AlphaStable(T(α/2), one(T), T(2*cos(π*α/4)^(2.0/α)), zero(T)))
+    CT = rand(Chisq(m))
     S = randn(m)
     S = S/sqrt(sum(abs2,S))
-    xtmp = ((sigrootx1*sqrt(A*T))*S)'
+    xtmp = ((sigrootx1*sqrt(A*CT))*S)'
     if n<=m
         copyto!(x, @view(xtmp[1:n]))
     else
@@ -421,7 +429,8 @@ function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian, x::AbstractArray)
 end
 
 
-Base.rand(rng::AbstractRNG, d::AlphaSubGaussian) = rand!(rng, d, zeros(d.n))
+Base.rand(rng::AbstractRNG, d::AlphaSubGaussian) = rand!(rng, d, zeros(eltype(d), d.n))
+Base.eltype(::Type{<:AlphaSubGaussian{T}}) where {T} = T
 
 """
     fit(d::Type{<:AlphaSubGaussian}, x, m; p=1.0)
