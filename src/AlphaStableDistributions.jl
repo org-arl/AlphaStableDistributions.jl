@@ -188,7 +188,7 @@ skewness parameter, scale parameter (dispersion^1/α) and location parameter res
 
 α, β, c and δ are computed based on McCulloch (1986) fractile.
 """
-function Distributions.fit(::Type{<:AlphaStable}, x::AbstractArray{T}, alg=QuickSort) where {T}
+function Distributions.fit(::Type{<:AlphaStable}, x::AbstractArray{T}, alg=QuickSort) where {T<:AbstractFloat}
     sx = sort(x, alg=alg)
     p = quantile.(Ref(sx), (0.05, 0.25, 0.28, 0.5, 0.72, 0.75, 0.95), sorted=true)
     να = (p[7]-p[1]) / (p[6]-p[2])
@@ -235,7 +235,7 @@ returns `SymmetricAlphaStable`
 scale is computed based on Fama & Roll (1971) fractile.
 location is the 50% trimmed mean of the sample.
 """
-function Distributions.fit(::Type{<:SymmetricAlphaStable}, x::AbstractArray{T}, alg=QuickSort) where {T}
+function Distributions.fit(::Type{<:SymmetricAlphaStable}, x::AbstractArray{T}, alg=QuickSort) where {T<:AbstractFloat}
     sx = sort(x, alg=alg)
     δ = mean(@view(sx[end÷4:(3*end)÷4]))
     p = quantile.(Ref(sx), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
@@ -269,7 +269,7 @@ This implementation is based on the method in J.M. Chambers, C.L. Mallows
 and B.W. Stuck, "A Method for Simulating Stable Random Variables," JASA 71 (1976): 340-4.
 McCulloch's MATLAB implementation (1996) served as a reference in developing this code.
 """
-function Base.rand(rng::AbstractRNG, d::AlphaStable{T}) where {T<:Real}
+function Base.rand(rng::AbstractRNG, d::AlphaStable{T}) where {T<:AbstractFloat}
     α=d.α; β=d.β; scale=d.scale; loc=d.location
     (α < 0.1 || α > 2) && throw(DomainError(α, "α must be in the range 0.1 to 2"))
     abs(β) > 1 && throw(DomainError(β, "β must be in the range -1 to 1"))
@@ -370,7 +370,7 @@ function subgausscondprobtabulate(α, x1, x2_ind, invRx1, invR, vjoint, nmin, nm
 end
 
 
-function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian{T}, x::AbstractArray{T}) where {T<:Real}
+function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian{T}, x::AbstractArray{T}) where {T<:AbstractFloat}
     α=d.α; R=d.R; n=d.n
     length(x) >= n || throw(ArgumentError("length of x must be at least n"))
     α ∈ 1.10:0.01:1.98 || throw(DomainError(α, "α must lie within `1.10:0.01:1.98`"))
