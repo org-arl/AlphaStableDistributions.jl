@@ -188,7 +188,7 @@ skewness parameter, scale parameter (dispersion^1/α) and location parameter res
 
 α, β, c and δ are computed based on McCulloch (1986) fractile.
 """
-function Distributions.fit(::Type{<:AlphaStable}, x, alg=QuickSort)
+function Distributions.fit(::Type{<:AlphaStable}, x::AbstractArray{T}, alg=QuickSort) where {T}
     sx = sort(x, alg=alg)
     p = quantile.(Ref(sx), (0.05, 0.25, 0.28, 0.5, 0.72, 0.75, 0.95), sorted=true)
     να = (p[7]-p[1]) / (p[6]-p[2])
@@ -212,7 +212,7 @@ function Distributions.fit(::Type{<:AlphaStable}, x, alg=QuickSort)
     else
         δ = ζ - β * c * tan(π*α/2)
     end
-    return AlphaStable(α=α, β=β, scale=c, location=oftype(α, δ))
+    return AlphaStable(α=T(α), β=T(β), scale=T(c), location=T(δ))
 end
 
 Base.@kwdef struct SymmetricAlphaStable{T} <: Distributions.ContinuousUnivariateDistribution
@@ -235,12 +235,12 @@ returns `SymmetricAlphaStable`
 scale is computed based on Fama & Roll (1971) fractile.
 location is the 50% trimmed mean of the sample.
 """
-function Distributions.fit(::Type{<:SymmetricAlphaStable}, x, alg=QuickSort)
+function Distributions.fit(::Type{<:SymmetricAlphaStable}, x::AbstractArray{T}, alg=QuickSort) where {T}
     sx = sort(x, alg=alg)
     δ = mean(@view(sx[end÷4:(3*end)÷4]))
     p = quantile.(Ref(sx), (0.05, 0.25, 0.28, 0.72, 0.75, 0.95), sorted=true)
-    c = (p[4]-p[3])/1.654
-    an = (p[6]-p[1])/(p[5]-p[2])
+    c = (p[4]-p[3]) / 1.654
+    an = (p[6]-p[1]) / (p[5]-p[2])
     if an < 2.4388
         α = 2.
     else
@@ -253,7 +253,7 @@ function Distributions.fit(::Type{<:SymmetricAlphaStable}, x, alg=QuickSort)
     if α < 0.5
         α = 0.5
     end
-    return SymmetricAlphaStable(α=α, scale=c, location=oftype(α, δ))
+    return SymmetricAlphaStable(α=T(α), scale=T(c), location=T(δ))
 end
 
 """
@@ -322,15 +322,11 @@ The maximum acceptable size of `R` is `10x10`
 julia> x = rand(AlphaSubGaussian(n=1000))
 ```
 """
-Base.@kwdef struct AlphaSubGaussian{T<:AbstractFloat} <: Distributions.ContinuousUnivariateDistribution
+Base.@kwdef struct AlphaSubGaussian{T<:AbstractFloat,M<:AbstractMatrix} <: Distributions.ContinuousUnivariateDistribution
     α::T = 1.50
-    R::AbstractMatrix{T} = SMatrix{5,5}(collect(SymmetricToeplitz([1.0000, 0.5804, 0.2140, 0.1444, -0.0135])))
+    R::M = SMatrix{5,5}(collect(SymmetricToeplitz([1.0000, 0.5804, 0.2140, 0.1444, -0.0135])))
     n::Int
 end
-
-AlphaSubGaussian(α::T, n::Int) where {T<:AbstractFloat} = AlphaSubGaussian(α=α, 
-                                                                           R=SMatrix{5,5}(T.(collect(SymmetricToeplitz([1.0000, 0.5804, 0.2140, 0.1444, -0.0135])))),
-                                                                           n=n)
 
 """
 Generates the conditional probability f(X2|X1) if [X1, X2] is a sub-Gaussian
@@ -377,7 +373,7 @@ end
 function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian{T}, x::AbstractArray{T}) where {T<:Real}
     α=d.α; R=d.R; n=d.n
     length(x) >= n || throw(ArgumentError("length of x must be at least n"))
-    α ∈ T.(1.10:0.01:1.98) || throw(DomainError(α, "α must lie within `1.10:0.01:1.98`"))
+    α ∈ 1.10:0.01:1.98 || throw(DomainError(α, "α must lie within `1.10:0.01:1.98`"))
     m = size(R, 1)-1
     funk1 = x -> (2^α)*sin(π*α/2)*gamma((α+2)/2)*gamma((α+x)/2)/(gamma(x/2)*π*α/2)
     funk2 = x -> 4*gamma(x/α)/((α*2^2)*gamma(x/2)^2)
@@ -430,7 +426,7 @@ end
 
 
 Base.rand(rng::AbstractRNG, d::AlphaSubGaussian) = rand!(rng, d, zeros(eltype(d), d.n))
-Base.eltype(::Type{<:AlphaSubGaussian{T}}) where {T} = T
+Base.eltype(::Type{<:AlphaSubGaussian}) = Float64
 
 """
     fit(d::Type{<:AlphaSubGaussian}, x, m; p=1.0)
