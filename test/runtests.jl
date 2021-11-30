@@ -3,38 +3,43 @@ using Test, Random, Distributions
 
 @testset "AlphaStableDistributions.jl" begin
 
+    sampletypes = [Float32,Float64]
     stabletypes = [AlphaStable,SymmetricAlphaStable]
     αs = [0.6:0.1:2,1:0.1:2]
-    for (i, stabletype) in enumerate(stabletypes)
-        for α in αs[i]
-            d1 = AlphaStable(α=α)
-            s = rand(d1, 100000)
+    for sampletype ∈ sampletypes
+        for (i, stabletype) in enumerate(stabletypes)
+            for α in αs[i]
+                d1 = AlphaStable(α=sampletype(α))
+                s = rand(d1, 200000)
+                @test eltype(s) == sampletype
 
-            d2 = fit(stabletype, s)
+                d2 = fit(stabletype, s)
+                @test typeof(d2.α) == sampletype 
 
-            @test d1.α ≈ d2.α rtol=0.1
-            stabletype != SymmetricAlphaStable && @test d1.β ≈ d2.β atol=0.2
-            @test d1.scale ≈ d2.scale rtol=0.1
-            @test d1.location ≈ d2.location atol=0.1
+                @test d1.α ≈ d2.α rtol=0.1
+                stabletype != SymmetricAlphaStable && @test d1.β ≈ d2.β atol=0.2
+                @test d1.scale ≈ d2.scale rtol=0.1
+                @test d1.location ≈ d2.location atol=0.1
+            end
+
+            xnormal = rand(Normal(3.0, 4.0), 96000)
+            d = fit(stabletype, xnormal)
+            @test d.α ≈ 2 rtol=0.2
+            stabletype != SymmetricAlphaStable && @test d.β ≈ 0 atol=0.2
+            @test d.scale ≈ 4/√2 rtol=0.2
+            @test d.location ≈ 3 rtol=0.1
+
+            xcauchy = rand(Cauchy(3.0, 4.0), 96000)
+            d = fit(stabletype, xcauchy)
+            @test d.α ≈ 1 rtol=0.2
+            stabletype != SymmetricAlphaStable && @test d.β ≈ 0 atol=0.2
+            @test d.scale ≈ 4 rtol=0.2
+            @test d.location ≈ 3 rtol=0.1
         end
-
-        xnormal = rand(Normal(3.0, 4.0), 96000)
-        d = fit(stabletype, xnormal)
-        @test d.α ≈ 2 rtol=0.2
-        stabletype != SymmetricAlphaStable && @test d.β ≈ 0 atol=0.2
-        @test d.scale ≈ 4/√2 rtol=0.2
-        @test d.location ≈ 3 rtol=0.1
-
-        xcauchy = rand(Cauchy(3.0, 4.0), 96000)
-        d = fit(stabletype, xcauchy)
-        @test d.α ≈ 1 rtol=0.2
-        stabletype != SymmetricAlphaStable && @test d.β ≈ 0 atol=0.2
-        @test d.scale ≈ 4 rtol=0.2
-        @test d.location ≈ 3 rtol=0.1
     end
 
     for α in 1.1:0.1:1.9
-        d = AlphaSubGaussian(n=96000, α=α)
+        d = AlphaSubGaussian(α=α, n=96000)
         x = rand(d)
         x2 = copy(x)
         rand!(d, x2)
@@ -47,14 +52,15 @@ using Test, Random, Distributions
         @test d3.location ≈ 0 atol=0.1
     end
 
-    d4 = AlphaSubGaussian(n=96000)
-    m = size(d4.R, 1)-1
+    d4 = AlphaSubGaussian(α=1.5, n=96000)
+    m = size(d4.R, 1) - 1
     x = rand(d4)
     d5 = fit(AlphaSubGaussian, x, m, p=1.0)
     @test d4.α ≈ d5.α rtol=0.1
     @test d4.R ≈ d5.R rtol=0.1
 
 end
+
 # 362.499 ms (4620903 allocations: 227.64 MiB)
 # 346.520 ms (4621052 allocations: 209.62 MiB) # StaticArrays in outer fun
 # 345.925 ms (4225524 allocations: 167.66 MiB) # tempind to tuple
