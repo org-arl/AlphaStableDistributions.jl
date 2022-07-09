@@ -15,7 +15,11 @@ Base.@kwdef struct AlphaStable{T} <: Distributions.ContinuousUnivariateDistribut
 end
 
 AlphaStable(α::Integer, β::Integer, scale::Integer, location::Integer) = AlphaStable(float(α), float(β), float(scale), float(location))
-
+function AlphaStable(α,β,scale,location)
+    αT,βT,scaleT,locationT =  promote(α,β,scale,location)
+    AlphaStable(αT,βT,scaleT,locationT)
+end
+Distributions.params(d::AlphaStable) = (d.α, d.β, d.scale, d.location)
 
 # sampler(d::AlphaStable) = error("Not implemented")
 # pdf(d::AlphaStable, x::Real) = error("Not implemented")
@@ -33,7 +37,17 @@ Statistics.var(d::AlphaStable) = d.α == 2 ? 2d.scale^2 : Inf
 # kurtosis(d::Distribution, ::Bool) = error("Not implemented")
 # entropy(d::AlphaStable, ::Real) = error("Not implemented")
 # mgf(d::AlphaStable, ::Any) = error("Not implemented")
-# cf(d::AlphaStable, ::Any) = error("Not implemented")
+
+function Distributions.cf(d::AlphaStable{S}, t::Real) where {S}
+    T = float(promote_type(S, typeof(t)))
+    α,β,c,δ = params(d)
+    Φ = if α == one(α)
+        T(-2/π * log(abs(t)))
+    else
+        T(tan(π*α/2))
+    end
+    exp(im*t*δ - abs(c*t)^α * (1 - im*β*sign(t)*Φ))
+end
 
 # lookup tables from McCulloch (1986)
 const _ena = [
@@ -219,6 +233,12 @@ Base.@kwdef struct SymmetricAlphaStable{T} <: Distributions.ContinuousUnivariate
     α::T = 1.5
     scale::T = one(α)
     location::T = zero(α)
+end
+Distributions.params(d::SymmetricAlphaStable) = (d.α, d.scale, d.location)
+Distributions.cf(d::SymmetricAlphaStable, t::Real) = cf(AlphaStable(d), t)
+
+function AlphaStable(d::SymmetricAlphaStable)
+    AlphaStable(α=d.α,scale=d.scale,location=d.location)
 end
 
 """
