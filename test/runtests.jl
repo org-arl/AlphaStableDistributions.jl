@@ -5,7 +5,7 @@ using Test, Random, Distributions
     rng = MersenneTwister(1)
     for _ in 1:100
         d = AlphaStable(
-            α=rand(rng,Uniform(0,10)), 
+            α=rand(rng,Uniform(0,2)), 
             β=rand(rng,Uniform(-1,1)), 
             scale=rand(rng,Uniform(0,10)), 
             location=rand(rng,Uniform(0,10)),
@@ -17,6 +17,18 @@ using Test, Random, Distributions
         d32 = AlphaStable(Float32.(Distributions.params(d))...)
         @test cf(d32, Float32(x)) isa Complex{Float32}
         @test cf(d32, Float32(x)) ≈ cf(d,x) atol=100*eps(Float32)
+    end
+    for _ in 1:100
+        # test stability under convolution
+        d = AlphaStable(
+            α=rand(rng,Uniform(0.1,2)), 
+            scale=1.0,
+            location=0.0,
+        )
+        x = rand(rng,Uniform(-1,1))
+        n = rand(rng,1:10^6)
+        s = n^inv(d.α)
+        @test cf(d, x) ≈ cf(d, x/s)^n
     end
     xs = range(-1,1,length=100)
     d1 = SymmetricAlphaStable(α=2.0, scale=1/sqrt(2), location=0.0)
