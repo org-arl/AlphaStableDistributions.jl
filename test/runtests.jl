@@ -63,6 +63,9 @@ end
 
     
 @testset "AlphaStableDistributions.jl" begin
+    @test AlphaStable(α=1, scale=1.5) === AlphaStable(α=1.0, scale=1.5)
+    @test Distributions.params(AlphaStable()) === (1.5, 0.0, 1.0, 0.0)
+    @test Distributions.params(SymmetricAlphaStable()) === (1.5, 1.0, 0.0)
     rng = MersenneTwister(0)
     sampletypes = [Float32,Float64]
     stabletypes = [AlphaStable,SymmetricAlphaStable]
