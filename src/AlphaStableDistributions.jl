@@ -236,6 +236,7 @@ Base.@kwdef struct SymmetricAlphaStable{T} <: Distributions.ContinuousUnivariate
 end
 Distributions.params(d::SymmetricAlphaStable) = (d.α, d.scale, d.location)
 Distributions.cf(d::SymmetricAlphaStable, t::Real) = cf(AlphaStable(d), t)
+Random.rand(rng::AbstractRNG, d::SymmetricAlphaStable) = rand(rng, AlphaStable(d))
 
 function AlphaStable(d::SymmetricAlphaStable)
     AlphaStable(α=d.α,scale=d.scale,location=d.location)
@@ -412,9 +413,9 @@ function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian{T}, x::AbstractArray
     nmax, nmin, res, rind, vjoint = matdict["Nmax"]::Float64, matdict["Nmin"]::Float64, matdict["res"]::Float64, vec(matdict["rind"])::Vector{Float64}, matdict["vJoint"]::Matrix{Float64}
     step = (log10(nmax)-log10(nmin))/res
     m>size(vjoint, 1)-1 && throw(DomainError(R, "The dimensions of `R` exceed the maximum possible 10x10"))
-    A = rand(AlphaStable(T(α/2), one(T), T(2*cos(π*α/4)^(2.0/α)), zero(T)))
-    CT = rand(Chisq(m))
-    S = randn(m)
+    A = rand(rng,AlphaStable(T(α/2), one(T), T(2*cos(π*α/4)^(2.0/α)), zero(T)))
+    CT = rand(rng,Chisq(m))
+    S = randn(rng,m)
     S = S/sqrt(sum(abs2,S))
     xtmp = ((sigrootx1*sqrt(A*CT))*S)'
     if n<=m
@@ -430,8 +431,8 @@ function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian{T}, x::AbstractArray
             norm1 = subgausscondprobtabulate(α, x1, mode, invRx1, invR, vjoint, nmin, nmax, step, rind, kappa, k1, k2, kmarg)
             notaccept = true
             while notaccept
-                u = rand()
-                v = (norms/norm1)*rand(TDist(vstud)) + mode
+                u = rand(rng)
+                v = (norms/norm1)*rand(rng,TDist(vstud)) + mode
                 gv = (norm1/norms)*pdf(TDist(vstud), (v-mode)*(norm1/norms))
                 fv = subgausscondprobtabulate(α, x1, v, invRx1, invR, vjoint, nmin, nmax, step, rind, kappa, k1, k2, kmarg)
                 if c*u <= fv/gv

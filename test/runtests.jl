@@ -1,6 +1,12 @@
 using AlphaStableDistributions
 using Test, Random, Distributions
 
+@testset "Reproducibility" begin
+    @test rand(MersenneTwister(0), AlphaStable()         ) == rand(MersenneTwister(0), AlphaStable()         ) 
+    @test rand(MersenneTwister(0), SymmetricAlphaStable()) == rand(MersenneTwister(0), SymmetricAlphaStable())
+    @test rand(MersenneTwister(0), AlphaSubGaussian(n=10)) == rand(MersenneTwister(0), AlphaSubGaussian(n=10)) 
+end
+
 @testset "cf" begin
     rng = MersenneTwister(1)
     for _ in 1:100
@@ -122,8 +128,8 @@ end
     d5 = fit(AlphaSubGaussian, x, m, p=1.0)
     @test d4.α ≈ d5.α rtol=0.1
     @test d4.R ≈ d5.R rtol=0.1
-
 end
+
 # 362.499 ms (4620903 allocations: 227.64 MiB)
 # 346.520 ms (4621052 allocations: 209.62 MiB) # StaticArrays in outer fun
 # 345.925 ms (4225524 allocations: 167.66 MiB) # tempind to tuple
