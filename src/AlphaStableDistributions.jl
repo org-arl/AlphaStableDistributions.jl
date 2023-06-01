@@ -2,7 +2,7 @@ module AlphaStableDistributions
 
 using LinearAlgebra, Statistics, Random
 using StatsBase, Distributions, StaticArrays
-using MAT, SpecialFunctions, ToeplitzMatrices
+using FileIO, JLD2, SpecialFunctions, ToeplitzMatrices
 using Interpolations
 
 export AlphaStable, SymmetricAlphaStable, AlphaSubGaussian, fit
@@ -409,7 +409,7 @@ function Random.rand!(rng::AbstractRNG, d::AlphaSubGaussian{T}, x::AbstractArray
     invRx1 = inv(R[onetom, onetom])
     sigrootx1 = cholesky(R[onetom, onetom]).L
     modefactor = R[end, onetom]'/R[onetom, onetom]
-    matdict = matread(joinpath(@__DIR__(),"vr_repo/vr_alpha=$(α).mat"))
+    matdict = load(joinpath(@__DIR__(),"vr_repo/vr_alpha=$(α).jld2"))
     nmax, nmin, res, rind, vjoint = matdict["Nmax"]::Float64, matdict["Nmin"]::Float64, matdict["res"]::Float64, vec(matdict["rind"])::Vector{Float64}, matdict["vJoint"]::Matrix{Float64}
     step = (log10(nmax)-log10(nmin))/res
     m>size(vjoint, 1)-1 && throw(DomainError(R, "The dimensions of `R` exceed the maximum possible 10x10"))
