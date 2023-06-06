@@ -237,6 +237,7 @@ end
 Distributions.params(d::SymmetricAlphaStable) = (d.α, d.scale, d.location)
 Distributions.cf(d::SymmetricAlphaStable, t::Real) = cf(AlphaStable(d), t)
 Random.rand(rng::AbstractRNG, d::SymmetricAlphaStable) = rand(rng, AlphaStable(d))
+Base.eltype(::Type{<:SymmetricAlphaStable{T}}) where {T<:AbstractFloat} = T
 
 function AlphaStable(d::SymmetricAlphaStable)
     AlphaStable(α=d.α,scale=d.scale,location=d.location)
