@@ -467,10 +467,10 @@ with memory", Signal Processing, Volume 131, Pages 271-279, 2017.
 """
 function Distributions.fit(d::Type{<:AlphaSubGaussian}, x::AbstractVector{T}, m::Integer; p=one(T)) where T
     d1   = fit(AlphaStable, x)
-    α    = d1.α; scale=d1.scale
+    α    = d1.α; sc=d1.scale
     cov  = zeros(T, m+1, m+1)
     xlen = length(x)
-    c    = ((sum(x->abs(x)^p, x)/xlen)^(1/p))/scale
+    c    = ((sum(x->abs(x)^p, x)/xlen)^(1/p))/sc
     for i in 1:m
         tempxlen = xlen-mod(xlen, i)
         xtemp = reshape(x[1:end-mod(xlen, i)], i, tempxlen÷i)
@@ -479,11 +479,11 @@ function Distributions.fit(d::Type{<:AlphaSubGaussian}, x::AbstractVector{T}, m:
             tempxlen = size(xtemp, 1)*size(xtemp, 2)
         end
         xtemp = reshape(xtemp', 2, tempxlen÷2)
-        @views r = (2/(c^p))*(scale^(2-p))*(xtemp[1, :]'*((sign.(xtemp[2, :]).*(abs.(xtemp[2, :]).^(p-1)))))/(tempxlen/2)
+        @views r = (2/(c^p))*(sc^(2-p))*(xtemp[1, :]'*((sign.(xtemp[2, :]).*(abs.(xtemp[2, :]).^(p-1)))))/(tempxlen/2)
         cov[diagind(cov, i)] .+= r
     end
-    cov = (cov+cov')+2*(scale^2)*I(m+1)
-    cov ./= 2*scale^2
+    cov = (cov+cov')+2*(sc^2)*I(m+1)
+    cov ./= 2*sc^2
     AlphaSubGaussian(α=α, R=cov, n=length(x))
 end
 
