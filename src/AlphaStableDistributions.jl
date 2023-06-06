@@ -290,29 +290,29 @@ This implementation is based on the method in J.M. Chambers, C.L. Mallows
 and B.W. Stuck, "A Method for Simulating Stable Random Variables," JASA 71 (1976): 340-4.
 McCulloch's MATLAB implementation (1996) served as a reference in developing this code.
 """
-function Base.rand(rng::AbstractRNG, d::AlphaStable{T}) where {T<:AbstractFloat}
-    α=d.α; β=d.β; scale=d.scale; loc=d.location
+function Base.rand(rng::AbstractRNG, d::AlphaStable{T}) where {T<:AbstractFloat} 
+    α=d.α; β=d.β; sc=d.scale; loc=d.location
     (α < 0.1 || α > 2) && throw(DomainError(α, "α must be in the range 0.1 to 2"))
     abs(β) > 1 && throw(DomainError(β, "β must be in the range -1 to 1"))
-    ϕ = (rand(rng, T) - 0.5) * π
+    # added eps(T) to prevent DomainError: x ^ y where x < 0
+    ϕ = (rand(rng, T) - T(0.5)) * π * (one(T) - eps(T))
     if α == one(T) && β == zero(T)
-        return loc + scale * tan(ϕ)
+        return loc + sc * tan(ϕ)
     end
     w = -log(rand(rng, T))
-    α == 2 && (return loc + 2*scale*sqrt(w)*sin(ϕ))
-    β == zero(T) && (return loc + scale * ((cos((1-α)*ϕ) / w)^(one(T)/α - one(T)) * sin(α * ϕ) / cos(ϕ)^(one(T)/α)))
+    α == 2 && (return loc + 2*sc*sqrt(w)*sin(ϕ))
+    β == zero(T) && (return loc + sc * ((cos((one(T)-α)*ϕ) / w)^(one(T)/α - one(T)) * sin(α * ϕ) / cos(ϕ)^(one(T)/α)))
     cosϕ = cos(ϕ)
     if abs(α - one(T)) > 1e-8
         ζ = β * tan(π * α / 2)
         aϕ = α * ϕ
         a1ϕ = (one(T) - α) * ϕ
-        return loc + scale * (( (sin(aϕ) + ζ * cos(aϕ))/cosϕ * ((cos(a1ϕ) + ζ*sin(a1ϕ))) / ((w*cosϕ)^((1-α)/α)) ))
+        return loc + sc * ((((sin(aϕ) + ζ * cos(aϕ))/cosϕ) * ((cos(a1ϕ) + ζ*sin(a1ϕ)) / (w*cosϕ))^((one(T)-α)/α)))
     end
     bϕ = π/2 + β*ϕ
     x = 2/π * (bϕ * tan(ϕ) - β * log(π/2*w*cosϕ/bϕ))
     α == one(T) || (x += β * tan(π*α/2))
-
-    return loc + scale * x
+    return loc + sc * x
 end
 
 Base.eltype(::Type{<:AlphaStable{T}}) where {T<:AbstractFloat} = T
