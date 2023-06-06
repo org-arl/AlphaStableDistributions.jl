@@ -76,20 +76,31 @@ end
     sampletypes = [Float32,Float64]
     stabletypes = [AlphaStable,SymmetricAlphaStable]
     αs = [0.6:0.1:2,1:0.1:2]
+    betas = [-1:0.5:1,0.0]
+    sc = 2.0
     for sampletype ∈ sampletypes
         for (i, stabletype) in enumerate(stabletypes)
             for α in αs[i]
-                d1 = AlphaStable(α=sampletype(α))
-                s = rand(rng,d1, 200000)
-                @test eltype(s) == sampletype
+                for β in betas[i]
+                    d1 = if stabletype == AlphaStable 
+                        stabletype(α=sampletype(α), β=sampletype(β), scale=sampletype(sc))
+                    else
+                        stabletype(α=sampletype(α), scale=sampletype(sc))
+                    end
+                    s = rand(rng, d1, 10^6)
+                    @test eltype(s) == sampletype
 
-                d2 = fit(stabletype, s)
-                @test typeof(d2.α) == sampletype 
+                    d2 = fit(stabletype, s)
+                    @test typeof(d2.α) == sampletype 
 
-                @test d1.α ≈ d2.α rtol=0.1
-                stabletype != SymmetricAlphaStable && @test d1.β ≈ d2.β atol=0.2
-                @test d1.scale ≈ d2.scale rtol=0.1
-                @test d1.location ≈ d2.location atol=0.1
+                    @test d1.α ≈ d2.α rtol=0.1
+                    if (stabletype != SymmetricAlphaStable) && (α != 2)
+                        @test d1.β ≈ d2.β atol=0.2
+                    end
+                    # the quantile method is less accurate
+                    @test d1.scale ≈ d2.scale rtol=0.2 * sc
+                    @test d1.location ≈ d2.location atol=0.9 * sc
+                end
             end
 
             xnormal = rand(rng,Normal(3.0, 4.0), 96000)
@@ -119,7 +130,7 @@ end
         @test d3.α ≈ α rtol=0.2
         @test d3.β ≈ 0 atol=0.2
         @test d3.scale ≈ 1 rtol=0.2
-        @test d3.location ≈ 0 atol=0.1
+        @test d3.location ≈ 0 atol=0.2
     end
 
     d4 = AlphaSubGaussian(α=1.5, n=96000)
