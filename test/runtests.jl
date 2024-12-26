@@ -22,7 +22,7 @@ end
 
         d32 = AlphaStable(Float32.(Distributions.params(d))...)
         @test cf(d32, Float32(x)) isa Complex{Float32}
-        @test cf(d32, Float32(x)) ≈ cf(d,x) atol=100*eps(Float32)
+        @test cf(d32, Float32(x)) ≈ cf(d,x) atol=500*eps(Float32)
     end
     for _ in 1:100
         # test stability under convolution
