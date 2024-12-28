@@ -300,7 +300,7 @@ function Base.rand(rng::AbstractRNG, d::AlphaStable{T}) where {T<:AbstractFloat}
     if α == one(T) && β == zero(T)
         return loc + sc * tan(ϕ)
     end
-    w = -log(rand(rng, T))
+    w = randexp(rng) # exponential random variable with mean 1
     α == 2 && (return loc + 2*sc*sqrt(w)*sin(ϕ))
     β == zero(T) && (return loc + sc * ((cos((one(T)-α)*ϕ) / w)^(one(T)/α - one(T)) * sin(α * ϕ) / cos(ϕ)^(one(T)/α)))
     cosϕ = cos(ϕ)
