@@ -89,6 +89,7 @@ end
                     end
                     s = rand(rng, d1, 10^6)
                     @test eltype(s) == sampletype
+                    @test any(isinf.(s)) == false
 
                     d2 = fit(stabletype, s)
                     @test typeof(d2.α) == sampletype 
